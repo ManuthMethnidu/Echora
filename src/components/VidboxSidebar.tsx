@@ -193,7 +193,7 @@ export const VidboxSidebar: React.FC<VidboxSidebarProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="text-xs font-bold text-white truncate">
-                      {user.fullName || user.username || 'Clerk User'}
+                      {user.fullName || user.username || 'Echora User'}
                     </p>
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" title="Active Session" />
                   </div>

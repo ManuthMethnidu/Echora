@@ -20,6 +20,10 @@ export interface NeonSession {
   expiresAt?: string;
 }
 
+export interface OpenSignInOptions {
+  mode?: 'signin' | 'signup';
+}
+
 interface NeonAuthContextType {
   user: NeonUser | null;
   session: any | null;
@@ -28,9 +32,15 @@ interface NeonAuthContextType {
   sessions: NeonSession[];
   signUp: (params: { email: string; password: string; name?: string }) => Promise<{ user?: NeonUser; error?: any }>;
   signIn: (params: { email: string; password: string }) => Promise<{ user?: NeonUser; error?: any }>;
+  signInWithGoogle: (callbackUrl?: string) => Promise<any>;
   signOut: () => Promise<void>;
-  openSignIn: () => void;
+  openSignIn: (options?: OpenSignInOptions) => void;
+  closeSignIn: () => void;
   openUserProfile: () => void;
+  closeUserProfile: () => void;
+  isSignInOpen: boolean;
+  signInMode: 'signin' | 'signup';
+  isUserProfileOpen: boolean;
   setActive: (params: { session: string }) => Promise<void>;
   refreshSession: () => Promise<void>;
 }
@@ -55,6 +65,11 @@ export const NeonAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [user, setUser] = useState<NeonUser | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Modal dialog states
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [signInMode, setSignInMode] = useState<'signin' | 'signup'>('signin');
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -83,6 +98,34 @@ export const NeonAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     refreshSession();
   }, [refreshSession]);
 
+  const openSignIn = useCallback((options?: OpenSignInOptions) => {
+    setSignInMode(options?.mode || 'signin');
+    setIsSignInOpen(true);
+    setIsUserProfileOpen(false);
+  }, []);
+
+  const closeSignIn = useCallback(() => {
+    setIsSignInOpen(false);
+  }, []);
+
+  const openUserProfile = useCallback(() => {
+    setUser((currentUser) => {
+      if (currentUser) {
+        setIsUserProfileOpen(true);
+        setIsSignInOpen(false);
+      } else {
+        setSignInMode('signin');
+        setIsSignInOpen(true);
+        setIsUserProfileOpen(false);
+      }
+      return currentUser;
+    });
+  }, []);
+
+  const closeUserProfile = useCallback(() => {
+    setIsUserProfileOpen(false);
+  }, []);
+
   const signUp = async ({ email, password, name }: { email: string; password: string; name?: string }) => {
     try {
       const res = await authClient.signUp.email({
@@ -101,10 +144,12 @@ export const NeonAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSession(res.data);
         authStorage.setUserId(norm.id);
         await refreshSession();
+        setIsSignInOpen(false);
         return { user: norm };
       }
 
       await refreshSession();
+      setIsSignInOpen(false);
       return { user: undefined };
     } catch (err: any) {
       return { error: { message: err?.message || 'Failed to sign up with Neon Auth' } };
@@ -128,13 +173,33 @@ export const NeonAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSession(res.data);
         authStorage.setUserId(norm.id);
         await refreshSession();
+        setIsSignInOpen(false);
         return { user: norm };
       }
 
       await refreshSession();
+      setIsSignInOpen(false);
       return { user: undefined };
     } catch (err: any) {
       return { error: { message: err?.message || 'Failed to sign in with Neon Auth' } };
+    }
+  };
+
+  const signInWithGoogle = async (callbackUrl?: string) => {
+    try {
+      const targetUrl =
+        callbackUrl || (typeof window !== 'undefined' ? window.location.href : 'http://localhost:5173');
+      const res = await authClient.signIn.social({
+        provider: 'google',
+        callbackURL: targetUrl,
+      });
+      if (res.data?.url && typeof window !== 'undefined') {
+        window.location.href = res.data.url;
+      }
+      return res;
+    } catch (err: any) {
+      console.error('Google social sign in error:', err);
+      throw err;
     }
   };
 
@@ -147,21 +212,7 @@ export const NeonAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setUser(null);
       setSession(null);
       authStorage.setUserId('guest');
-    }
-  };
-
-  const openSignIn = () => {
-    if (typeof window !== 'undefined') {
-      window.location.hash = '#signin';
-      const event = new CustomEvent('echora:navigate-login', { detail: { mode: 'signin' } });
-      window.dispatchEvent(event);
-    }
-  };
-
-  const openUserProfile = () => {
-    if (typeof window !== 'undefined') {
-      const event = new CustomEvent('echora:navigate-settings', { detail: { tab: 'profile' } });
-      window.dispatchEvent(event);
+      setIsUserProfileOpen(false);
     }
   };
 
@@ -181,7 +232,7 @@ export const NeonAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     ];
   }, [user, session]);
 
-  const value = {
+  const value: NeonAuthContextType = {
     user,
     session,
     isLoaded,
@@ -189,9 +240,15 @@ export const NeonAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     sessions,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     openSignIn,
+    closeSignIn,
     openUserProfile,
+    closeUserProfile,
+    isSignInOpen,
+    signInMode,
+    isUserProfileOpen,
     setActive,
     refreshSession,
   };
@@ -214,8 +271,28 @@ export const useUser = () => {
 };
 
 export const useClerk = () => {
-  const { signOut, openUserProfile, openSignIn, setActive, user, isSignedIn } = useNeonAuth();
-  return { signOut, openUserProfile, openSignIn, setActive, user, isSignedIn };
+  const {
+    signOut,
+    openUserProfile,
+    openSignIn,
+    closeSignIn,
+    closeUserProfile,
+    signInWithGoogle,
+    setActive,
+    user,
+    isSignedIn,
+  } = useNeonAuth();
+  return {
+    signOut,
+    openUserProfile,
+    openSignIn,
+    closeSignIn,
+    closeUserProfile,
+    signInWithGoogle,
+    setActive,
+    user,
+    isSignedIn,
+  };
 };
 
 export const useSessionList = () => {

@@ -80,7 +80,7 @@ export const MinimalHomeView: React.FC<MinimalHomeViewProps> = ({
     sessions && sessions.length > 0
       ? sessions.map((s) => ({
           id: s.id,
-          name: s.user?.fullName || s.user?.username || 'Clerk User',
+          name: s.user?.fullName || s.user?.username || 'Echora User',
           email: s.user?.primaryEmailAddress?.emailAddress || '',
           imageUrl: s.user?.imageUrl,
           plan: 'Pro',

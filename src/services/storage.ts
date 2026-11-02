@@ -219,7 +219,7 @@ class StorageService {
     return profiles;
   }
 
-  syncClerkProfile(name?: string | null, avatarUrl?: string | null): UserProfile {
+  syncAuthProfile(name?: string | null, avatarUrl?: string | null): UserProfile {
     const active = this.getActiveProfile();
     const updated: UserProfile = {
       ...active,
@@ -229,6 +229,10 @@ class StorageService {
     this.saveProfile(updated);
     this.setActiveProfile(updated);
     return updated;
+  }
+
+  syncClerkProfile(name?: string | null, avatarUrl?: string | null): UserProfile {
+    return this.syncAuthProfile(name, avatarUrl);
   }
 
   // --- WATCHLIST (User-Scoped) ---

@@ -621,7 +621,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </section>
 
         {/* ========================================================
-            5. ACCOUNT & CLERK AUTHENTICATION (SWITCH ACCOUNT)
+            5. ACCOUNT & NEON BETTER AUTH (SWITCH ACCOUNT)
            ======================================================== */}
         <section className="space-y-4 border-t border-white/10 pt-8">
           <div className="flex items-center justify-between">
@@ -634,10 +634,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white tracking-tight">
-                  Account & Authentication
+                  Account & Better Auth
                 </h2>
                 <p className="text-xs text-zinc-400">
-                  Manage your Clerk identity, linked devices, and switch accounts
+                  Manage your Neon Auth identity, linked devices, and switch accounts
                 </p>
               </div>
             </div>
@@ -669,7 +669,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-bold text-white">
-                          {user.fullName || user.username || 'Clerk User'}
+                          {user.fullName || user.username || 'Echora User'}
                         </h3>
                         <span className="h-2 w-2 rounded-full bg-emerald-400" title="Active" />
                         <span className="text-[10px] font-mono text-emerald-400 font-bold">
@@ -752,7 +752,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             <button
                               onClick={() => {
                                 setActive({ session: s.id });
-                                showNotification('Switched active Clerk account');
+                                showNotification('Switched active account');
                               }}
                               className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors"
                             >

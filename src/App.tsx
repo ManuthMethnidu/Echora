@@ -29,6 +29,8 @@ import { useRadioStore } from './store/radioStore';
 import { FloatingPiP } from './components/FloatingPiP';
 import { Footer } from './components/Footer';
 import { LoginView } from './components/LoginView';
+import { NeonAuthModal } from './components/NeonAuthModal';
+import { NeonUserProfileModal } from './components/NeonUserProfileModal';
 import { Episode, MediaItem } from './types/schema';
 import { api } from './services/api';
 import { authStorage } from './services/storage';
@@ -54,7 +56,7 @@ const MainApp: React.FC = () => {
   const { user, isLoaded } = useUser();
   const queryClient = useQueryClient();
 
-  // Keep authStorage and query cache aligned with Clerk user
+  // Keep authStorage and query cache aligned with Neon Auth user
   useEffect(() => {
     if (isLoaded) {
       const nextUserId = user ? user.id : 'guest';
@@ -575,6 +577,10 @@ const MainApp: React.FC = () => {
           onNextEpisode={handleNextEpisode}
         />
       )}
+
+      {/* Neon Managed Better Auth Modals */}
+      <NeonAuthModal />
+      <NeonUserProfileModal />
     </div>
   );
 };
