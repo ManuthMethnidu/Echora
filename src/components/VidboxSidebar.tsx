@@ -23,7 +23,7 @@ import {
   UserCog,
 } from 'lucide-react';
 import { useAccent } from '../context/AccentContext';
-import { useUser, useClerk } from '@clerk/react';
+import { useUser, useClerk } from '../context/NeonAuthContext';
 
 export type NavViewId =
   | 'home'

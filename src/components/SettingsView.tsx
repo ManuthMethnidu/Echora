@@ -22,7 +22,7 @@ import { useSettingsStore, PerformanceMode, DEFAULT_NAV_ITEMS } from '../store/s
 import { ALL_NAV_ITEMS } from './NavbarCustomizerModal';
 import { STREAM_PROVIDERS } from '../services/providers';
 import { authStorage } from '../services/storage';
-import { useUser, useClerk, useSessionList } from '@clerk/react';
+import { useUser, useClerk, useSessionList } from '../context/NeonAuthContext';
 
 interface SettingsViewProps {
   onBack?: () => void;

@@ -35,7 +35,7 @@ import { authStorage } from './services/storage';
 import { AccentProvider, useAccent } from './context/AccentContext';
 import { usePlayerStore } from './store/playerStore';
 import { useSettingsStore } from './store/settingsStore';
-import { useUser } from '@clerk/react';
+import { useUser } from './context/NeonAuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useBillboardQuery,

@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Sparkles, KeyRound } from 'lucide-react';
-import { SignIn, SignUp } from '@clerk/react';
-import { dark } from '@clerk/themes';
+import { ArrowLeft, Sparkles, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react';
 import { useAccent } from '../context/AccentContext';
+import { useNeonAuth } from '../context/NeonAuthContext';
 import { EchoraLogo } from './EchoraLogo';
-import { CLERK_PUBLISHABLE_KEY } from '../config/clerk';
 
 interface LoginViewProps {
   onBack: () => void;
@@ -13,33 +11,71 @@ interface LoginViewProps {
 
 export const LoginView: React.FC<LoginViewProps> = ({ onBack, onSuccess }) => {
   const { accentHex } = useAccent();
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const hasClerkKey = Boolean(CLERK_PUBLISHABLE_KEY);
+  const { signIn, signUp } = useNeonAuth();
 
-  const clerkAppearance = {
-    theme: dark,
-    variables: {
-      colorPrimary: accentHex || '#2185D5',
-      colorBackground: '#303841',
-      borderRadius: '0.75rem',
-    },
-    elements: {
-      card: 'bg-[#303841] border border-white/10 shadow-2xl rounded-2xl',
-      headerTitle: 'text-2xl font-black text-white tracking-tight',
-      headerSubtitle: 'text-xs text-zinc-400',
-      socialButtonsBlockButton:
-        'bg-[#3A4750] border border-white/10 text-white hover:bg-white/10 text-xs font-semibold rounded-xl h-11',
-      formButtonPrimary:
-        'h-11 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-lg hover:brightness-110 active:scale-98 transition-all',
-      formFieldInput:
-        'bg-[#3A4750] border border-white/10 text-white placeholder-zinc-500 rounded-xl h-11 focus:ring-2 focus:ring-[#2185D5]',
-      footerActionLink: 'text-[#2185D5] hover:text-[#2185D5]/80 font-semibold',
-    },
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setErrorMsg('Please enter your email address');
+      return;
+    }
+    if (!password) {
+      setErrorMsg('Please enter your password');
+      return;
+    }
+    if (authMode === 'signup' && password.length < 8) {
+      setErrorMsg('Password must be at least 8 characters long');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      if (authMode === 'signup') {
+        const res = await signUp({
+          email: trimmedEmail,
+          password,
+          name: name.trim() || trimmedEmail.split('@')[0],
+        });
+        if (res.error) {
+          setErrorMsg(res.error.message || 'Sign up failed. Please check your credentials.');
+          return;
+        }
+      } else {
+        const res = await signIn({
+          email: trimmedEmail,
+          password,
+        });
+        if (res.error) {
+          setErrorMsg(res.error.message || 'Invalid email or password.');
+          return;
+        }
+      }
+
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        onBack();
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Authentication error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen w-full bg-[#303841] text-[#F3F3F3] grid lg:grid-cols-2 select-none">
-      {/* Left Column: Authentic shadcn login-02 Form Structure */}
+      {/* Left Column: Authentic Neon Managed Better Auth Form Structure */}
       <div className="flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 relative z-10">
         {/* Top Header: Brand & Back to Browse */}
         <div className="flex items-center justify-between">
@@ -47,106 +83,138 @@ export const LoginView: React.FC<LoginViewProps> = ({ onBack, onSuccess }) => {
 
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-zinc-300 hover:text-white bg-white/5 hover:bg-white/10 transition-colors border border-white/10 cursor-pointer"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Back to Browse</span>
           </button>
         </div>
 
-        {/* Center: Clerk Authentication Form */}
+        {/* Center: Neon Auth Form */}
         <div className="mx-auto w-full max-w-sm sm:max-w-md py-6 flex flex-col items-center justify-center">
-          {hasClerkKey ? (
-            <div className="w-full flex flex-col items-center space-y-4">
-              {authMode === 'signin' ? (
-                <SignIn
-                  routing="hash"
-                  appearance={clerkAppearance}
-                  fallbackRedirectUrl="/"
-                  signUpUrl="#signup"
-                />
-              ) : (
-                <SignUp
-                  routing="hash"
-                  appearance={clerkAppearance}
-                  fallbackRedirectUrl="/"
-                  signInUrl="#signin"
-                />
+          <div className="w-full flex flex-col items-center space-y-5">
+            {/* Header Title */}
+            <div className="text-center space-y-1.5">
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                {authMode === 'signin' ? 'Welcome Back' : 'Create an Account'}
+              </h1>
+              <p className="text-xs text-zinc-400">
+                {authMode === 'signin'
+                  ? 'Sign in to access your synchronized watchlist and history'
+                  : 'Sign up with email to unlock cloud sync across all devices'}
+              </p>
+            </div>
+
+            {/* Error Message Alert */}
+            {errorMsg && (
+              <div className="w-full p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                <span className="flex-1 text-left">{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="w-full space-y-3.5">
+              {authMode === 'signup' && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-300">Name</label>
+                  <div className="relative flex items-center">
+                    <User className="absolute left-3 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full h-11 pl-9.5 pr-3.5 rounded-xl bg-[#3A4750] border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:ring-2 focus:ring-[#2185D5] transition-all"
+                    />
+                  </div>
+                </div>
               )}
 
-              {/* Mode Toggle & Guest Action */}
-              <div className="flex items-center gap-4 text-xs text-zinc-400 pt-2">
-                <button
-                  onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
-                  className="hover:text-white underline underline-offset-4 transition-colors"
-                >
-                  {authMode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
-                </button>
-                <span>•</span>
-                <button
-                  onClick={() => {
-                    if (onSuccess) onSuccess();
-                    else onBack();
-                  }}
-                  className="hover:text-white flex items-center gap-1 transition-colors"
-                >
-                  <Sparkles className="h-3 w-3 text-amber-400" />
-                  <span>Guest Access</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="w-full space-y-6 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#3A4750] border border-white/10 shadow-lg">
-                <KeyRound className="h-7 w-7 text-[#2185D5]" />
-              </div>
-
-              <div className="space-y-2">
-                <h1 className="text-2xl font-extrabold tracking-tight text-white">
-                  Clerk Authentication Ready
-                </h1>
-                <p className="text-xs text-zinc-400 max-w-sm mx-auto leading-relaxed">
-                  Linked to Clerk application <code className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">app_3LGvQKNKQ5CvSlC391y2TL39XFS</code>.
-                  Add your Publishable Key to activate live sign-in.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#3A4750]/60 border border-white/10 text-left text-xs space-y-2">
-                <p className="text-zinc-300 font-semibold">To complete setup:</p>
-                <div className="p-2.5 rounded-lg bg-black/40 font-mono text-[11px] text-zinc-300 break-all select-all">
-                  VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-300">Email Address</label>
+                <div className="relative flex items-center">
+                  <Mail className="absolute left-3 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-11 pl-9.5 pr-3.5 rounded-xl bg-[#3A4750] border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:ring-2 focus:ring-[#2185D5] transition-all"
+                  />
                 </div>
-                <p className="text-[11px] text-zinc-400">
-                  Find this in your Clerk Dashboard under <strong>API Keys</strong>.
-                </p>
               </div>
 
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-zinc-300">Password</label>
+                </div>
+                <div className="relative flex items-center">
+                  <Lock className="absolute left-3 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-11 pl-9.5 pr-3.5 rounded-xl bg-[#3A4750] border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:ring-2 focus:ring-[#2185D5] transition-all"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-11 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-lg hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50"
+                style={{ backgroundColor: accentHex || '#2185D5' }}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                )}
+              </button>
+            </form>
+
+            {/* Mode Toggle & Guest Action */}
+            <div className="flex items-center gap-4 text-xs text-zinc-400 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorMsg(null);
+                  setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+                }}
+                className="hover:text-white underline underline-offset-4 transition-colors cursor-pointer"
+              >
+                {authMode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+              </button>
+              <span>•</span>
               <button
                 type="button"
                 onClick={() => {
                   if (onSuccess) onSuccess();
                   else onBack();
                 }}
-                className="w-full h-11 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-lg transition-all hover:brightness-110 active:scale-98 flex items-center justify-center gap-2"
-                style={{ background: accentHex }}
+                className="hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <Sparkles className="h-4 w-4" />
-                <span>Continue as Guest Watcher</span>
+                <Sparkles className="h-3 w-3 text-amber-400" />
+                <span>Guest Access</span>
               </button>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Footer: Legal Disclaimer */}
+        {/* Footer: Legal & Security Disclaimer */}
         <div className="text-center text-[11px] text-zinc-400 pt-6">
-          Protected by{' '}
+          Secured by{' '}
           <a
-            href="https://clerk.com"
+            href="https://neon.com/docs/auth/overview"
             target="_blank"
             rel="noreferrer"
             className="font-semibold text-white underline underline-offset-4 hover:text-[#2185D5]"
           >
-            Clerk Auth
+            Neon Managed Better Auth
           </a>
           . By continuing, you agree to our{' '}
           <a href="#" className="underline underline-offset-4 hover:text-white">
@@ -160,7 +228,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onBack, onSuccess }) => {
         </div>
       </div>
 
-      {/* Right Column: Hero Cinematic Artwork (shadcn login-02 pattern) */}
+      {/* Right Column: Hero Cinematic Artwork */}
       <div className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden bg-[#1f252b]">
         {/* Cinematic Backdrop Image with Contrast & Vignette */}
         <img

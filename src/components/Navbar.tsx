@@ -13,7 +13,7 @@ import {
   Sliders,
 } from 'lucide-react';
 import { useAccent } from '../context/AccentContext';
-import { useUser, useClerk, useSessionList } from '@clerk/react';
+import { useUser, useClerk, useSessionList } from '../context/NeonAuthContext';
 import { EchoraLogo } from './EchoraLogo';
 import { ProfileDropdown, Account, ProfileMenuItem } from './ProfileDropdown';
 import { NavbarCustomizerModal, ALL_NAV_ITEMS } from './NavbarCustomizerModal';

@@ -15,7 +15,7 @@ import {
   User,
   Sliders,
 } from 'lucide-react';
-import { useUser, useClerk, useSessionList } from '@clerk/react';
+import { useUser, useClerk, useSessionList } from '../context/NeonAuthContext';
 import { MediaItem, BillboardData, CarouselRail } from '../types/schema';
 import { useNavigate } from 'react-router-dom';
 import { authStorage } from '../services/storage';

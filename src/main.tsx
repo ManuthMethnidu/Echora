@@ -2,11 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ClerkProvider } from '@clerk/react';
-import { dark } from '@clerk/themes';
+import { NeonAuthProvider } from './context/NeonAuthContext';
 import { App } from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { CLERK_PUBLISHABLE_KEY } from './config/clerk';
 import './index.css';
 import '@material/web/all.js';
 import '@material/web/typography/md-typescale-styles.css';
@@ -26,27 +24,17 @@ const queryClient = new QueryClient({
 const AppRoot = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <NeonAuthProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </NeonAuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ClerkProvider
-      publishableKey={CLERK_PUBLISHABLE_KEY}
-      appearance={{
-        theme: dark,
-        variables: {
-          colorPrimary: '#2185D5',
-          colorBackground: '#303841',
-        },
-      }}
-      afterSignOutUrl="/"
-    >
-      <AppRoot />
-    </ClerkProvider>
+    <AppRoot />
   </React.StrictMode>
 );

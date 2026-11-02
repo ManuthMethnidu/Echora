@@ -10,9 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@clerk/react": "^6.18.2",
-    "@clerk/themes": "^2.4.57",
     "@material/web": "^2.5.0",
+    "@neon/auth": "^0.8.2",
     "@neon/config": "^1.10.0",
     "@neon/env": "^1.6.8",
     "@tanstack/react-query": "^5.105.0",
