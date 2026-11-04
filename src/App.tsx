@@ -47,6 +47,7 @@ import {
 } from './hooks/useCatalogQuery';
 import { useGridKeyboardNav } from './hooks/useGridKeyboardNav';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const MainApp: React.FC = () => {
   const { accentHex } = useAccent();
@@ -590,6 +591,7 @@ export const App: React.FC = () => {
     <AccentProvider>
       <MainApp />
       <Analytics />
+      <SpeedInsights />
     </AccentProvider>
   );
 };
